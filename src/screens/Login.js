@@ -11,6 +11,7 @@ import BottomBox from '../components/auth/BottomBox';
 import routes from '../routes';
 import PageTitle from '../components/PageTitle';
 import { useForm } from 'react-hook-form';
+import FormError from '../components/auth/FormError';
 
 const FacebookLogin = styled.div`
   color:#40588A;
@@ -21,8 +22,13 @@ const FacebookLogin = styled.div`
 `;
 
 function Login() {
-  const { register, watch } = useForm();
-  console.log(watch);
+  const { register, watch, handleSubmit, errors, formState } = useForm({
+    mode: "onChange",
+  });
+  const onSubmitValid = (data) => {
+    console.log(data, "valid");
+  };
+
   return (
     <AuthLayout>    
       <PageTitle title="Login"/>
@@ -30,10 +36,31 @@ function Login() {
         <div>
           <FontAwesomeIcon icon={faInstagram} size="3x" />
         </div>
-        <form>
-          <Input ref={register} name="username" type="text" placeholder="Username" />
-          <Input ref={register} name="password" type="password" placeholder="Password" />
-          <Button type="submit" value="Log in" placeholder="Log in" />
+        <form onSubmit={handleSubmit(onSubmitValid)}>
+          <Input 
+            ref={
+              register({
+              required: "Username is required", 
+              minLength: {
+                value: 5,
+                message: "Username should be longer than 5 chars"
+              },
+            })}
+            name="username" 
+            type="text"
+            placeholder="Username" 
+            hasError={Boolean(errors?.username?.message)}
+          />
+          <FormError message={errors?.username?.message} />
+          <Input  
+            ref={register({required: "Password is required"})} 
+            name="password" 
+            type="password" 
+            placeholder="Password" 
+            hasError={Boolean(errors?.password?.message)}
+          />
+          <FormError message={errors?.password?.message} />
+          <Button type="submit" value="Log in" placeholder="Log in" disabled={!formState.isValid} />
         </form>  
         <Separator />
         <FacebookLogin>

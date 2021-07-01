@@ -18,7 +18,6 @@ function useUser() {
   const {data, error} = useQuery(ME_QUERY, {
     skip: !hasToken
   });
-  console.log(error);
   useEffect(() => {
     if(data?.me === null) { // 이 코드가 작동되는 이유는 클라이언트 쪽에서 서버쪽으로 토큰을 보내지 않아서이다
       console.log("there is a token on localstorage but the token did not work on the backend");

@@ -7,6 +7,7 @@ import propTypes from "prop-types";
 import styled from "styled-components";
 import { gql, useMutation } from "@apollo/client";
 import Comments from "./Comments";
+import { Link } from "react-router-dom";
 
 const TOGGLE_LIKE_MUTATION = gql`
   mutation toggleLike($id: Int!) {
@@ -36,6 +37,8 @@ const Username = styled(FatText)`
 
 const PhotoFile = styled.img`
   width: 100%;
+  height: 600px;
+  object-fit: contain;
 `;
 
 const PhotoData = styled.div`
@@ -65,37 +68,29 @@ const Likes = styled(FatText)`
   margin-top: 15px
 `;
 
-function Photo({id, user, file, isLiked, likes, caption, commentNumber, comments}) {
+function Photo({id, user, file, isLiked, likes, caption, commentNumber, comments, isMine}) {
   const updateToggleLike = (cache, result) => {
     const {
       data: {
-          toggleLike: {ok},
-        },
-      } = result;
-    if(ok) {
-      const fragmentId = `Photo:${id}`;
-      const fragment = gql`
-        fragment heart on Photo {
-          isLiked
-          likes
-        }
-      `;
-      const result = cache.readFragment({
-        id: fragmentId,
-        fragment
-      });
-      if("isLiked" in result && "likes" in result) {
-        const {isLiked: cacheIsLiked, likes: cacheLikes} = result;
-        cache.writeFragment({
-          id: fragmentId,
-          fragment: fragment,
-          data: {
-            isLiked: !cacheIsLiked,
-            likes: cacheIsLiked ? cacheLikes - 1 : cacheLikes + 1 
-          }
-      })
+        toggleLike: {ok},
       }
-      
+    } = result;
+    if(ok) {
+      const photoId = `Photo:${id}`;
+      cache.modify({
+        id: photoId,
+        fields: {
+          isLiked(prev) {
+            return !prev;
+          },
+          likes(prev) {
+            if(isLiked) {
+              return prev - 1
+            }
+            return prev + 1
+          }
+        }
+      })
     }
   };
   const [toggleLikeMutation, {loading}] = useMutation(TOGGLE_LIKE_MUTATION, {
@@ -107,8 +102,12 @@ function Photo({id, user, file, isLiked, likes, caption, commentNumber, comments
   return (
     <PhotoContainer>
       <PhotoHeader>
+        <Link to={`/users/${user.username}`}>
         <Avatar url={user.avatar} lg/>
-        <Username>{user.username}</Username>
+        </Link>
+        <Link to={`/users/${user.username}`}>
+          <Username>{user.username}</Username>
+        </Link>
       </PhotoHeader>
       <PhotoFile src={file} />
       <PhotoData>
@@ -129,10 +128,12 @@ function Photo({id, user, file, isLiked, likes, caption, commentNumber, comments
         </PhotoActions>
         <Likes>{likes === 1 ? "1 likes" : `${likes} likes`}</Likes>
         <Comments 
+          photoId={id}
           author={user.username}
           caption={caption}
           commentNumber={commentNumber}
           comments={comments}
+          isMine={isMine}
         />
       </PhotoData>
     </PhotoContainer>
@@ -150,7 +151,7 @@ Photo.propTypes = {
   likes: propTypes.number.isRequired,
   caption: propTypes.string,
   commentNumber: propTypes.number.isRequired,
-  
+  isMine: propTypes.bool.isRequired
 };
 
 export default Photo;

@@ -10,6 +10,7 @@ import Login from './screens/Login';
 import NotFound from './screens/NotFound';
 import SignUp from './screens/SignUp';
 import { darkTheme, GlobalStyles, lightTheme } from './styles';
+import Profile from './screens/Profile';
 
 
 function App() {
@@ -34,9 +35,14 @@ function App() {
               <Route path={routes.signUp}><SignUp /></Route> :
               null
             }
+            <Route path={`/users/:username`}>
+              <Layout>
+                <Profile />
+              </Layout>
+            </Route>
             <Route>
-            <NotFound />
-          </Route>
+              <NotFound />
+            </Route>
           </Switch>
         </Router>
       </ThemeProvider>
